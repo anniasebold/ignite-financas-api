@@ -65,10 +65,58 @@ app.post("/account", (request, response) => {
   return response.status(201).send();
 })
 
-app.get("/statement/", verifyIfExistsAccountCpf ,(request, response) => {
+app.put("/account", verifyIfExistsAccountCpf, (request, response) => {
+  const { customer } = request;
+  const { name } = request.body;
+
+  customer.name = name;
+
+  return response.status(201).json(customer)
+})
+
+app.get("/account", verifyIfExistsAccountCpf, (request, response) => {
+  const { customer } = request;
+
+  return response.json(customer);
+})
+
+app.delete("/account", verifyIfExistsAccountCpf, (request, response) => {
+  const { customer } = request;
+  
+  const getIndexCurrentCostumer = customers.findIndex(indexCustumer => indexCustumer.cpf === customer.cpf)
+
+  customers.splice(getIndexCurrentCostumer, 1);
+
+  return response.status(204);
+})
+
+app.get("/balance", verifyIfExistsAccountCpf, (request, response) => {
+  const { customer } = request;
+
+  const balance = getBalance(customer.statement);
+
+  return response.json({ balance: balance});
+})
+
+app.get("/statement", verifyIfExistsAccountCpf ,(request, response) => {
   const { customer } = request;
   return response.json(customer.statement);
 })
+
+app.get("/statement/date", verifyIfExistsAccountCpf ,(request, response) => {
+  const { customer } = request;
+  const { date } = request.query;
+
+  const dateFormat = new Date(date + " 00:00");
+
+  const statement = customer.statement.filter(
+    (statement) => 
+    statement.created_at.toDateString() === new Date(dateFormat).toDateString()
+  )
+
+  return response.json(statement);
+})
+
 
 app.post("/deposit", verifyIfExistsAccountCpf, (request, response) => {
   const { customer } = request;
