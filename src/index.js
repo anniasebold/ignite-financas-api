@@ -32,8 +32,20 @@ app.post("/account", (request, response) => {
     statement: []
   })
 
-  console.log(customers);
   return response.status(201).send();
+})
+
+app.get("/statement/", (request, response) => {
+  const { cpf } = request.headers;
+
+  const customerByCpf = customers.find(
+    (customer) => customer.cpf === cpf
+  );
+
+  if(!customerByCpf) {
+    return response.status(400).json({ error: "Customer not found" })
+  }
+  return response.json({ statement : customerByCpf.statement});
 })
 
 app.listen(3000, console.log('Server started at http://localhost:3000'));
