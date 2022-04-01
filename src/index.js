@@ -14,6 +14,24 @@ const customers = []
 
 */
 
+// Middleware
+
+function verifyIfExistsAccountCpf(request, response, next) {
+  const { cpf } = request.headers;
+
+  const customerByCpf = customers.find(
+    (customer) => customer.cpf === cpf
+  );
+
+  if(!customerByCpf) {
+    return response.status(400).json({ error: "Customer not found" })
+  }
+
+  request.customer = customerByCpf;
+
+  return next();
+}
+
 app.post("/account", (request, response) => {
   const { cpf, name } = request.body;
   
@@ -35,17 +53,29 @@ app.post("/account", (request, response) => {
   return response.status(201).send();
 })
 
-app.get("/statement/", (request, response) => {
-  const { cpf } = request.headers;
+app.get("/statement/", verifyIfExistsAccountCpf ,(request, response) => {
+  const { customer } = request;
+  return response.json(customer.statement);
+})
 
-  const customerByCpf = customers.find(
-    (customer) => customer.cpf === cpf
-  );
+app.post("/deposit", verifyIfExistsAccountCpf, (request, response) => {
+  const { customer } = request;
+  const { description, amount } = request.body;
 
-  if(!customerByCpf) {
-    return response.status(400).json({ error: "Customer not found" })
+  if (!amount) {
+    return response.status(400).send({ error: "Amount is required" })
   }
-  return response.json({ statement : customerByCpf.statement});
+
+  const statementOperation = {
+    description,
+    amount,
+    created_at: new Date(),
+    type: "credit"
+  }
+
+  customer.statement.push(statementOperation)
+
+  return response.status(201).json(statementOperation)
 })
 
 app.listen(3000, console.log('Server started at http://localhost:3000'));
